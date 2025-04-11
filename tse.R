@@ -39,7 +39,7 @@ secoes <- secoes %>%
 
 
 
-#Validação
+#Opção 2
 
 uf <- c('AC', 'AL', 'AM', 'AP', 'BA', 'CE', 'ES', 'GO', 'MA', 'MG', 'MS', 'MT', 'PA', 'PB', 'PE', 'PI', 'PR', 'RJ', 'RN', 
         'RO', 'RR', 'RS', 'SC', 'SE', 'SP', 'TO')
@@ -218,8 +218,6 @@ capitais <- c("RIO BRANCO", "MACEIÓ", "MANAUS", "MACAPÁ", "SALVADOR", "FORTALE
 uf <- c('AC', 'AL', 'AM', 'AP', 'BA', 'CE', 'ES', 'GO', 'MA', 'MG', 'MS', 'MT', 'PA', 'PB', 'PE', 'PI', 'PR', 'RJ', 'RN', 
         'RO', 'RR', 'RS', 'SC', 'SE', 'SP', 'TO')
 
-
-r <- c("RIO BRANCO", "FORTALEZA", "MACEIÓ")
 
 candidatos <- candidaturas %>%
   select(SG_UF, NM_UE, NM_CANDIDATO, DS_CARGO, NR_TURNO, DS_SIT_TOT_TURNO) %>%
