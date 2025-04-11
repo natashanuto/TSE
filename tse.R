@@ -9,6 +9,11 @@ local <- read_delim("~/TSE/Banco/eleitorado_local_votacao_2024.csv",
                     delim = ";", 
                     locale = locale(encoding = "latin1"))
 
+temp <- tempfile()
+download.file("https://cdn.tse.jus.br/estatistica/sead/odsele/eleitorado_locais_votacao/eleitorado_local_votacao_2024.zip",temp)
+l <- read.csv(unz(temp, "eleitorado_local_votacao_2024.csv"), sep = ";", encoding = "latin1")
+unlink(temp)
+
 local <- local %>%
   group_by(SG_UF, NM_MUNICIPIO) %>%
   summarise(Zonas = n_distinct(NR_ZONA),
@@ -18,12 +23,30 @@ local <- local %>%
 
 #Seções
 
+temp <- tempfile()
+download.file("https://cdn.tse.jus.br/estatistica/sead/odsele/perfil_eleitorado/perfil_eleitorado_2024.zip",temp)
+secoes <- read.csv(unz(temp, "perfil_eleitorado_2024.csv"), sep = ";", encoding = "latin1")
+unlink(temp)
+
+secoes <- secoes %>%
+  group_by(SG_UF,NM_MUNICIPIO) %>%
+  summarise(Eleitorado = n(),
+            EleitoradoFeminino = sum(DS_GENERO == "FEMININO"),
+            EleitoradoMasculino = sum(DS_GENERO == "MASCULINO"),
+            .groups = 'drop')  %>%
+  mutate(PorcentagemF = round(100*(EleitoradoFeminino / Eleitorado),2),
+         PorcentagemM = round(100*(EleitoradoMasculino / Eleitorado),2)) 
+
+
+
+#Validação
+
 uf <- c('AC', 'AL', 'AM', 'AP', 'BA', 'CE', 'ES', 'GO', 'MA', 'MG', 'MS', 'MT', 'PA', 'PB', 'PE', 'PI', 'PR', 'RJ', 'RN', 
         'RO', 'RR', 'RS', 'SC', 'SE', 'SP', 'TO')
 
 options(timeout=600)
 
-secoes <- lapply(uf, function(x) {
+secoes2 <- lapply(uf, function(x) {
   temp<- tempfile()
   download.file(paste0("https://cdn.tse.jus.br/estatistica/sead/odsele/perfil_eleitor_secao/perfil_eleitor_secao_2024_", x, ".zip"),temp)
   dados <- read.csv(unz(temp, paste0("perfil_eleitor_secao_2024_", x, ".csv")), sep  = ";", encoding='latin1', fileEncoding = 'latin1')
@@ -42,21 +65,8 @@ secoes <- lapply(uf, function(x) {
   return(dados)}) %>% bind_rows()
 
 
-#Validação
+#Ambos os códigos geram o mesmo dataframe :)
 
-temp <- tempfile()
-download.file("https://cdn.tse.jus.br/estatistica/sead/odsele/perfil_eleitorado/perfil_eleitorado_2024.zip",temp)
-secoes <- read.csv(unz(temp, "perfil_eleitorado_2024.csv"), sep = ";", encoding = "latin1")
-unlink(temp)
-
-secoes <- secoes %>%
-  group_by(SG_UF,NM_MUNICIPIO) %>%
-  summarise(Eleitorado = n(),
-            EleitoradoFeminino = sum(DS_GENERO == "FEMININO"),
-            EleitoradoMasculino = sum(DS_GENERO == "MASCULINO"),
-            .groups = 'drop')  %>%
-  mutate(PorcentagemF = round(100*(EleitoradoFeminino / Eleitorado),2),
-         PorcentagemM = round(100*(EleitoradoMasculino / Eleitorado),2))
 
 #Tabela
 
@@ -84,7 +94,7 @@ mapa <- lapply(uf, function(i) {
     bind_rows()
   
   return(banco)}) %>% bind_rows()
-  
+
 
 #Depois de fazer a função e meu computador rodar por 10 minutos, descobri que tinha um arquivo "BRASIL" 
 #com todas as UF's. Então, pude usar como correção (validação), ambos dataframes "mapa" e "brasil" possuem as 
@@ -106,7 +116,7 @@ library(geobr)
 teste <- read_state(code_state = "all", year = 2020) %>%
   filter(abbrev_state != "DF") %>%
   rename(SG_UF = abbrev_state)
-  
+
 
 grafico <- merge(teste,mapa, by = "SG_UF")
 
@@ -225,9 +235,6 @@ capitais <- c("RIO BRANCO", "MACEIÓ", "MANAUS", "MACAPÁ", "SALVADOR", "FORTALE
               "GOIÂNIA", "SÃO LUÍS", "BELO HORIZONTE", "CAMPO GRANDE", "CUIABÁ", "BELÉM",
               "JOÃO PESSOA", "RECIFE", "TERESINA", "CURITIBA", "RIO DE JANEIRO", "NATAL", "PORTO VELHO", "BOA VISTA",
               "PORTO ALEGRE", "FLORIANÓPOLIS", "ARACAJU", "SÃO PAULO", "PALMAS")
-
-uf <- c('AC', 'AL', 'AM', 'AP', 'BA', 'CE', 'ES', 'GO', 'MA', 'MG', 'MS', 'MT', 'PA', 'PB', 'PE', 'PI', 'PR', 'RJ', 'RN', 
-        'RO', 'RR', 'RS', 'SC', 'SE', 'SP', 'TO')
 
 
 tabela2 <- lapply(seq_along(uf), function(w) {
