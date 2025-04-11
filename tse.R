@@ -9,11 +9,6 @@ local <- read_delim("~/TSE/Banco/eleitorado_local_votacao_2024.csv",
                     delim = ";", 
                     locale = locale(encoding = "latin1"))
 
-temp <- tempfile()
-download.file("https://cdn.tse.jus.br/estatistica/sead/odsele/eleitorado_locais_votacao/eleitorado_local_votacao_2024.zip",temp)
-l <- read.csv(unz(temp, "eleitorado_local_votacao_2024.csv"), sep = ";", encoding = "latin1")
-unlink(temp)
-
 local <- local %>%
   group_by(SG_UF, NM_MUNICIPIO) %>%
   summarise(Zonas = n_distinct(NR_ZONA),
@@ -39,7 +34,7 @@ secoes <- secoes %>%
 
 
 
-#Opção 2
+#Opção 2 (Alternativa)
 
 uf <- c('AC', 'AL', 'AM', 'AP', 'BA', 'CE', 'ES', 'GO', 'MA', 'MG', 'MS', 'MT', 'PA', 'PB', 'PE', 'PI', 'PR', 'RJ', 'RN', 
         'RO', 'RR', 'RS', 'SC', 'SE', 'SP', 'TO')
@@ -64,8 +59,6 @@ secoes2 <- lapply(uf, function(x) {
   
   return(dados)}) %>% bind_rows()
 
-
-#Ambos os códigos geram o mesmo dataframe :)
 
 
 #Tabela
@@ -191,7 +184,7 @@ mapainterativo
 htmlwidgets::saveWidget(mapainterativo, file=paste0( getwd(), "/MapaInterativo.html"))
 
 
-#Canditados
+#Candidatos
 
 candidaturas <- lapply(uf, function(y) {
   tt <- tempfile()
@@ -207,16 +200,10 @@ candidaturas <- lapply(uf, function(y) {
 tt <- tempfile()
 download.file("https://cdn.tse.jus.br/estatistica/sead/odsele/consulta_cand/consulta_cand_2024.zip",tt)
 candidatos2 <- read.csv(unz(tt, paste0("consulta_cand_2024_BRASIL.csv")), sep  = ";", encoding='latin1')
-unlink(tt) #Correto, ambos os dataframes estão iguais
+unlink(tt) #Correto, ambos os dataframes estão iguais :)
 
 
-capitais <- c("RIO BRANCO", "MACEIÓ", "MANAUS", "MACAPÁ", "SALVADOR", "FORTALEZA", "VITÓRIA",
-              "GOIÂNIA", "SÃO LUÍS", "BELO HORIZONTE", "CAMPO GRANDE", "CUIABÁ", "BELÉM",
-              "JOÃO PESSOA", "RECIFE", "TERESINA", "CURITIBA", "RIO DE JANEIRO", "NATAL", "PORTO VELHO", "BOA VISTA",
-              "PORTO ALEGRE", "FLORIANÓPOLIS", "ARACAJU", "SÃO PAULO", "PALMAS")
-
-uf <- c('AC', 'AL', 'AM', 'AP', 'BA', 'CE', 'ES', 'GO', 'MA', 'MG', 'MS', 'MT', 'PA', 'PB', 'PE', 'PI', 'PR', 'RJ', 'RN', 
-        'RO', 'RR', 'RS', 'SC', 'SE', 'SP', 'TO')
+#Tabela
 
 
 candidatos <- candidaturas %>%
@@ -233,6 +220,9 @@ capitais <- c("RIO BRANCO", "MACEIÓ", "MANAUS", "MACAPÁ", "SALVADOR", "FORTALE
               "GOIÂNIA", "SÃO LUÍS", "BELO HORIZONTE", "CAMPO GRANDE", "CUIABÁ", "BELÉM",
               "JOÃO PESSOA", "RECIFE", "TERESINA", "CURITIBA", "RIO DE JANEIRO", "NATAL", "PORTO VELHO", "BOA VISTA",
               "PORTO ALEGRE", "FLORIANÓPOLIS", "ARACAJU", "SÃO PAULO", "PALMAS")
+
+uf <- c('AC', 'AL', 'AM', 'AP', 'BA', 'CE', 'ES', 'GO', 'MA', 'MG', 'MS', 'MT', 'PA', 'PB', 'PE', 'PI', 'PR', 'RJ', 'RN', 
+        'RO', 'RR', 'RS', 'SC', 'SE', 'SP', 'TO')
 
 
 tabela2 <- lapply(seq_along(uf), function(w) {
