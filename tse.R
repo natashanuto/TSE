@@ -42,8 +42,21 @@ secoes <- lapply(uf, function(x) {
   return(dados)}) %>% bind_rows()
 
 
+#Validação
 
+temp <- tempfile()
+download.file("https://cdn.tse.jus.br/estatistica/sead/odsele/perfil_eleitorado/perfil_eleitorado_2024.zip",temp)
+secoes <- read.csv(unz(temp, "perfil_eleitorado_2024.csv"), sep = ";", encoding = "latin1")
+unlink(temp)
 
+secoes <- secoes %>%
+  group_by(SG_UF,NM_MUNICIPIO) %>%
+  summarise(Eleitorado = n(),
+            EleitoradoFeminino = sum(DS_GENERO == "FEMININO"),
+            EleitoradoMasculino = sum(DS_GENERO == "MASCULINO"),
+            .groups = 'drop')  %>%
+  mutate(PorcentagemF = round(100*(EleitoradoFeminino / Eleitorado),2),
+         PorcentagemM = round(100*(EleitoradoMasculino / Eleitorado),2))
 
 #Tabela
 
@@ -53,6 +66,8 @@ tabela <- merge (local, secoes, by = c("SG_UF","NM_MUNICIPIO")) %>%
          Município = NM_MUNICIPIO) %>%
   mutate(Município = str_to_title(Município)) %>%
   arrange(Município)
+
+write.csv(tabela, file = "Eleitorado2024.csv", row.names = FALSE)
 
 
 #Mapa Eleitorado com Deficiência por UF
@@ -107,7 +122,7 @@ ggplot() +
   theme_minimal() +
   no_axis
 
-ggsave("mapa.png", width = 158, height = 93, units = "mm")
+ggsave("Mapa.png", width = 158, height = 93, units = "mm")
 
 #EXTRA:
 #Durante um projeto que gerenciei na empresa júnior ESTAT sobre Cafeicultura no Brasil,
@@ -134,8 +149,13 @@ mytext <- paste(
 ) %>%
   lapply(htmltools::HTML)
 
+library(ggplot2)
+library(magrittr)
+library(sf)
 
-mapainterativo <- leaflet(grafico) %>%
+simplificado <- st_simplify(grafico, preserveTopology = TRUE, dTolerance = 1000)
+
+mapainterativo <- leaflet(simplificado) %>%
   addProviderTiles("CartoDB.Positron") %>%  
   setView(lng = -55, lat = -15, zoom = 4) %>%
   addPolygons(
@@ -156,8 +176,9 @@ mapainterativo <- leaflet(grafico) %>%
     title = "Eleitorado com Deficiência", position = "bottomleft"
   )
 
+mapainterativo
 
-htmlwidgets::saveWidget(mapainterativo, file=paste0( getwd(), "/mapainterativo.html"))
+htmlwidgets::saveWidget(mapainterativo, file=paste0( getwd(), "/MapaInterativo.html"))
 
 
 #Canditados
@@ -198,7 +219,7 @@ candidatos <- candidaturas %>%
          Candidato = NM_CANDIDATO,
          Cargo = DS_CARGO, 
          Turno = NR_TURNO,
-         SItuação = DS_SIT_TOT_TURNO) 
+         Situação = DS_SIT_TOT_TURNO) 
 
 capitais <- c("RIO BRANCO", "MACEIÓ", "MANAUS", "MACAPÁ", "SALVADOR", "FORTALEZA", "VITÓRIA",
               "GOIÂNIA", "SÃO LUÍS", "BELO HORIZONTE", "CAMPO GRANDE", "CUIABÁ", "BELÉM",
@@ -215,11 +236,12 @@ tabela2 <- lapply(seq_along(uf), function(w) {
     filter(Cidade == capitais[w])
 }) %>% bind_rows()
 
-tabela3 <- lapply(capitais, function(a) {
-  prefeitos <- candidatos %>%
-    filter(Cidade == a)  
-  
-  return(prefeitos)
-}) %>% bind_rows()
+tabela2 <- tabela2 %>%
+  mutate(Cidade = str_to_title(Cidade),
+         Cargo = str_to_title(Cargo),
+         Candidato = str_to_title(Candidato),
+         Situação = str_to_title(Situação)) %>%
+  mutate(Turno = case_when(Turno == 1 ~ "1º turno",
+                           Turno == 2 ~ "2º turno"))
 
 write.csv(tabela2, file = "Candidatos2024.csv", row.names = FALSE)
